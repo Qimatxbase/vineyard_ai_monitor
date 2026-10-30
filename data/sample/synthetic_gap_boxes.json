@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "coordinate_space": "original_pixels",
+  "boxes": [
+    [
+      330,
+      132,
+      435,
+      177
+    ],
+    [
+      570,
+      372,
+      715,
+      417
+    ]
+  ]
+}
