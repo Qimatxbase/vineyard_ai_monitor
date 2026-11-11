@@ -1,0 +1,38 @@
+.block-container {max-width: 1440px; padding-top: 1.6rem; padding-bottom: 3rem;}
+h1, h2, h3 {letter-spacing: -.025em;}
+h1 {font-size: 2.15rem !important; font-weight: 650 !important;}
+h2 {font-size: 1.35rem !important;}
+h3 {font-size: 1.1rem !important;}
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {display: none;}
+[data-testid="stHeader"] {height: 0; background: transparent;}
+[data-testid="stToolbar"] {display: none;}
+[data-testid="stMetric"] {background: white; border: 1px solid #dce6d9; border-radius: 14px; padding: 18px 20px;}
+[data-testid="stMetricLabel"] {color: #586d60;}
+[data-testid="stMetricValue"] {font-size: 2rem; color:#174b34;}
+[data-testid="stExpander"] {background: #fff; border-radius: 10px;}
+.st-key-workspace_header {padding-bottom: 1rem; border-bottom: 1px solid #dce6d9; margin-bottom: .7rem;}
+.brand {font-size: 1.3rem; font-weight: 750; letter-spacing: -.04em; color: #174b34; line-height: 1.1;}
+.brand small {display: block; margin-top: 7px; color: #718276; font-size: .6rem; letter-spacing: .18em; font-weight: 600;}
+.connection-pill {display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: .73rem; color: #586d60; white-space: nowrap;}
+.connection-pill span {width: 7px; height: 7px; background: #9ba79d; border-radius: 50%;}
+.connection-pill.connected span {background: #25805b;}
+.st-key-workspace_page [role="radiogroup"] {gap: 4px; justify-content: center; flex-wrap: wrap;}
+.st-key-workspace_page [data-testid="stRadioOption"] {margin: 0; padding: 9px 12px; border-radius: 9px; background: transparent;}
+.st-key-workspace_page [data-testid="stRadioOption"] > div > div:first-child {display: none;}
+.st-key-workspace_page [data-testid="stRadioOption"][data-selected="true"] {background: #e3ede2; color: #174b34;}
+.st-key-workspace_page [data-testid="stRadioOption"]:focus-within {outline: 2px solid #25805b; outline-offset: 2px;}
+.st-key-workspace_page [data-testid="stRadioOption"] p {font-size: .86rem; font-weight: 550;}
+[data-testid="stPlotlyChart"] {border: 1px solid #e1e8de; border-radius: 14px; background: white; overflow: hidden;}
+button {border-radius: 9px !important;}
+@media (max-width: 700px) {
+  .block-container {padding: 1.1rem 1rem 2rem;}
+  .st-key-workspace_header [data-testid="stHorizontalBlock"] {gap: .5rem;}
+  .st-key-workspace_page {padding-top: 1rem;}
+  .st-key-workspace_page [role="radiogroup"] {justify-content: flex-start; gap: 2px;}
+  .st-key-workspace_page [data-testid="stRadioOption"] {padding: 8px 10px;}
+  .connection-pill {justify-content: flex-start;}
+  .st-key-summary_metrics [data-testid="stHorizontalBlock"] {gap: .75rem;}
+  .st-key-summary_metrics [data-testid="stColumn"] {width: calc(50% - .375rem); min-width: calc(50% - .375rem); flex: 1 1 calc(50% - .375rem);}
+  .st-key-summary_metrics [data-testid="stMetric"] {padding: 14px 12px;}
+  h1 {font-size: 1.8rem !important;}
+}

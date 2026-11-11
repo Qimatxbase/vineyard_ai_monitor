@@ -4,9 +4,12 @@ from pathlib import Path
 import streamlit as st
 
 from config import AnalysisConfig
-from src.dashboard import active_result, downloads, metric_cards, provenance, result_images, run_cached, show_warnings
 from src.data.dataset_loader import list_images, load_image
 from src.data.synthetic import generate_demo
+from src.runtime import is_public_demo
+from src.services.analysis import run_cached
+from src.ui.results import active_result, downloads, metric_cards, provenance, result_images, show_warnings
+from src.ui.session import store_results
 
 LOGGER = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,17 +18,28 @@ ROOT = Path(__file__).resolve().parents[1]
 def render():
     st.title("Vineyard Analysis")
     st.write("Upload an overhead RGB image, adjust the analysis, and generate an inspection map.")
+    public = is_public_demo()
+    max_images = 3 if public else 12
+    max_file_mb = 10 if public else 100
+    max_file_bytes = max_file_mb * 1024 * 1024
+    source_options = ["Upload images", "Synthetic demo"] if public else ["Upload images", "Local folder", "Synthetic demo"]
     requested = st.session_state.pop("demo_requested", False)
     if requested:
         st.session_state["source_choice"] = "Synthetic demo"
-    source = st.radio("Image source", ["Upload images", "Local folder", "Synthetic demo"], horizontal=True, key="source_choice")
+    if st.session_state.get("source_choice", "Upload images") not in source_options:
+        st.session_state["source_choice"] = "Upload images"
+    source = st.radio("Image source", source_options, horizontal=True, key="source_choice")
     inputs = []
     if source == "Upload images":
-        uploaded = st.file_uploader("RGB drone images", type=["jpg", "jpeg", "png", "tif", "tiff"], accept_multiple_files=True, help="Up to 12 images per analysis, 100 MB and 40 million pixels per image.")
-        inputs = [(item.name, item.getvalue()) for item in uploaded[:12]]
-        if len(uploaded) > 12:
-            st.warning("The first 12 images will be analysed. Split larger collections into batches.")
-    elif source == "Local folder":
+        uploaded = st.file_uploader("RGB drone images", type=["jpg", "jpeg", "png", "tif", "tiff"], accept_multiple_files=True, help=f"Up to {max_images} images per analysis, {max_file_mb} MB and 40 million pixels per image.")
+        for item in uploaded[:max_images]:
+            if item.size > max_file_bytes:
+                st.error(f"{item.name}: exceeds the {max_file_mb} MB input limit.")
+            else:
+                inputs.append((item.name, item.getvalue()))
+        if len(uploaded) > max_images:
+            st.warning(f"The first {max_images} images will be analysed. Split larger collections into batches.")
+    elif source == "Local folder" and not public:
         folder = st.text_input("Local RGB image folder", value=str(ROOT / "data" / "raw"))
         if st.button("Scan folder"):
             try:
@@ -47,7 +61,7 @@ def render():
                     st.error(str(exc))
             if len(chosen) > 12:
                 st.warning("The first 12 selected images will be analysed.")
-    else:
+    elif source == "Synthetic demo":
         st.warning("Synthetic demonstration: generated vineyard rows with deliberately introduced gaps and yellow canopy. Suitable for demonstrating the workflow, not field validation.")
         inputs = [("Synthetic vineyard demo", b"")]
     if inputs:
@@ -93,8 +107,7 @@ def render():
                 st.error(f"{name}: {exc}")
         progress.empty()
         if results:
-            st.session_state["results"] = results
-            st.session_state.pop("active_image_index", None)
+            store_results(results)
             st.success(f"Analysis complete for {len(results)} image(s). Open Vineyard Health Map to explore inspection priorities.")
     if st.session_state.get("results"):
         st.divider()

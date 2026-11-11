@@ -28,18 +28,52 @@ uv pip install --python .venv/bin/python -r requirements-lock.txt
 .venv/bin/streamlit run app.py
 ```
 
-`requirements.txt` declares supported dependency ranges; `requirements-lock.txt`
-records the versions verified in this checkout. No GPU, model download,
+`requirements.txt` pins the tested Streamlit version and declares supported
+ranges for other dependencies; `requirements-lock.txt` records the full tested
+environment. No GPU, model download,
 credentials, paid services or external APIs are required. Usage telemetry is
-disabled. Images and results remain local to the running app.
+disabled. Images and results are processed by the running app: your machine
+for local use, or the hosting server for the public demo.
+
+## Public demo
+
+Use `demo.py` when sharing the app publicly:
+
+```bash
+python -m streamlit run demo.py
+```
+
+It offers image uploads and the synthetic example, with **Local folder**
+disabled. Public uploads are limited to **3 images per run, 10 MB per image**;
+the local `app.py` supports 12 images and 100 MB per image.
+
+For permanent hosting on Streamlit Community Cloud, select repository
+`Qimatxbase/vineyard_ai_monitor`, branch `main`, entrypoint `demo.py`, and
+Python **3.11** in **Advanced settings**. Follow the
+[official deployment guide](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy).
 
 ## Try the complete workflow
 
-1. On **Overview**, click **Try the synthetic vineyard demo**. The app analyses a deterministic, generated vineyard image immediately.
-2. In **Vineyard Analysis**, inspect the actual binary mask, vegetation overlay, visual anomaly regions and possible gaps. Change settings and click **Analyse Vineyard** to rerun.
-3. Open **Vineyard Health Map**. Pan/zoom, hover over region centres, toggle overlays, select a region for a crop, and review the inspection queue and coverage/anomaly charts.
-4. Expand **Download analysis results** for CSV, JSON, original-size canopy mask PNG, annotated image, health map PNG or a complete ZIP.
-5. On **Evaluation**, enable **Use synthetic demonstration annotations**, then evaluate canopy, gaps or visual anomalies. Scores describe fabricated shapes only. For real images, supply independent, aligned annotations.
+Start on the project overview, with **Who we are** and **What we solve**.
+Click **Enter our project** to open the workspace; no account is required.
+The **Overview** tab to the left of **Dashboard** returns to the introduction without
+clearing the current analysis or drone demo.
+
+1. On **Dashboard**, review canopy coverage, the inspection map and prioritised regions. With no analysis loaded, it uses a clearly labelled, deterministic synthetic vineyard image. Navigation is in the top bar.
+2. Click **Run synthetic analysis** to load that image into **Vineyard Analysis**.
+3. In **Vineyard Analysis**, inspect the actual binary mask, vegetation overlay, visual anomaly regions and possible gaps. Change settings and click **Analyse Vineyard** to rerun.
+4. Open **Vineyard Health Map**. Pan/zoom, hover over region centres, toggle overlays, select a region for a crop, and review the inspection queue and coverage/anomaly charts.
+5. Expand **Download analysis results** for CSV, JSON, original-size canopy mask PNG, annotated image, health map PNG or a complete ZIP.
+6. On **Evaluation**, enable **Use synthetic demonstration annotations**, then evaluate canopy, gaps or visual anomalies. Scores describe fabricated shapes only. For real images, supply independent, aligned annotations.
+
+**Drone Connect** provides a separate simulated connection and inspection
+workflow. Connection status, preflight checks, mission progress and telemetry
+are demo data. Captured frames are generated images processed by the same
+analysis pipeline. The demo makes no hardware connection or real flight command.
+Click **Discover demo drone → Connect demo drone → Run preflight check → Start
+demo inspection**, then advance the route or capture a demo frame. Open its
+health map to review results. **Low battery** and **Weak signal** scenarios fail
+preflight and block inspection; disconnect and choose normal conditions to retry.
 
 All generated-demo views are labelled synthetic. The exact bundled sample is
 recognised by its file-content hash when uploaded or loaded from a folder.
@@ -51,13 +85,14 @@ See [the three-minute demo script and team roles](docs/DEMO.md).
 
 ## Use real RGB images
 
-Upload JPG/JPEG, PNG or TIF/TIFF files, or choose **Local folder**, enter the path,
+In the local app, upload JPG/JPEG, PNG or TIF/TIFF files, or choose **Local folder**, enter the path,
 click **Scan folder**, and select images. Relative and absolute paths work.
 Batch analysis supports up to 12 images per run. Choose the active image to
 inspect its results; the batch ZIP includes a summary and a result ZIP per image.
 Local folders are read from the machine hosting Streamlit, not a remote browser.
 
-Images are limited to 100 MB in the dashboard and 40 million pixels at decoding.
+Local images are limited to 100 MB each and 40 million pixels at decoding.
+The public demo applies the smaller upload and batch limits described above.
 Resize or crop larger images locally. EXIF orientation is applied. Original
 coordinates mean pixels in the oriented image. The first TIFF page is used;
 16-bit monochrome values receive a display conversion, not thermal calibration.
@@ -168,15 +203,23 @@ See [evaluation conventions and formats](docs/EVALUATION.md).
 ## Project structure and ownership
 
 ```text
-app.py                         Dashboard entry point
+app.py                         Thin local entry point
+demo.py                        Thin public entry point with upload-only input policy
 config.py                      Validated analysis settings
-pages/                         Overview, analysis, map, evaluation, about
+assets/styles/                 base.css and welcome.css
+pages/                         Welcome, dashboard, analysis, map, drone demo, evaluation
+src/ui/application.py          Page registry and application composition
+src/ui/navigation.py           Shared top bar and page labels
+src/ui/session.py              Workspace navigation and session actions
+src/ui/styles.py               Local stylesheet loader
+src/ui/results.py              Shared result cards, tables, images and downloads
+src/services/analysis.py       Cached analysis and synthetic-demo results
 src/data/                      Image loading, preprocessing, synthetic fixture
 src/vision/                    Segmentation, rows, gaps, coverage, anomalies, pipeline
 src/mapping/                   Interactive map and PNG overlays
 src/evaluation/                Annotation loading, metrics, error visualisation
 src/utils/export.py            CSV/JSON/PNG/ZIP exports
-src/dashboard.py               Shared cached analysis and dashboard helpers
+src/drone_demo.py              Simulated drone connection and inspection state
 scripts/prepare_dataset.py     Local dataset inspection and resizing
 tests/                         Component, integration and UI tests
 data/sample/                   Clearly labelled synthetic demo and annotations
@@ -187,6 +230,13 @@ Person 1 owns business/product and presentation; Person 2 owns `src/vision`;
 Person 3 owns `src/evaluation` and testing; Person 4 owns data, mapping,
 dashboard integration and exports. Modules expose reusable Python functions,
 including `src.vision.pipeline.analyze_image`.
+
+To maintain the app, edit `PAGE_ROUTES` in `src/ui/application.py` for navigation
+order and `PAGE_LABELS` in `src/ui/navigation.py` for display labels. Change
+shared styling in `assets/styles/base.css`, and the introduction styling in
+`assets/styles/welcome.css`. Page layouts belong in `pages/` (`welcome.py` is
+the introduction; `dashboard.py` is the inspection dashboard). Keep cached
+analysis in `src/services/analysis.py` and analysis algorithms in `src/vision/`.
 
 ## Limits and experimental features
 

@@ -8,6 +8,7 @@ font = "sans serif"
 [server]
 maxUploadSize = 100
 headless = true
+runOnSave = true
 
 [client]
 showSidebarNavigation = false

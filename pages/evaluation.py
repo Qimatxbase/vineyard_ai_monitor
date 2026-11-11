@@ -6,11 +6,11 @@ import numpy as np
 from PIL import Image
 import streamlit as st
 
-from src.dashboard import active_result, provenance
 from src.data.synthetic import generate_demo
 from src.evaluation.evaluate import evaluate_segmentation, load_boxes_json, load_ground_truth_mask
 from src.evaluation.metrics import detection_metrics
 from src.mapping.visualization import png_bytes
+from src.ui.results import active_result, provenance
 from src.utils.export import original_mask_png
 
 

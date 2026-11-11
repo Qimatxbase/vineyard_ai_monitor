@@ -1,41 +1,10 @@
-"""Shared Streamlit state, cached analysis and result presentation."""
-import hashlib
-from pathlib import Path
-
+"""Shared result views, inspection tables and download controls."""
+import pandas as pd
 import streamlit as st
 
-from config import AnalysisConfig
-from src.data.dataset_loader import load_image
-from src.data.synthetic import generate_demo
-from src.mapping.visualization import LABELS, annotated_image, png_bytes
+from src.mapping.visualization import LABELS, annotated_image, health_map_png, png_bytes
+from src.ui.session import open_demo
 from src.utils.export import batch_bundle, export_bundle, original_mask_png, regions_csv, result_json
-from src.vision.pipeline import analyze_image
-
-
-@st.cache_data(show_spinner=False)
-def _bundled_demo_digest():
-    fixture = Path(__file__).resolve().parents[1] / "data" / "sample" / "synthetic_vineyard.png"
-    return hashlib.sha256(fixture.read_bytes()).digest() if fixture.is_file() else None
-
-
-def is_bundled_demo(payload):
-    """Recognise our exact fixture bytes without trusting an upload's filename."""
-    return bool(payload) and hashlib.sha256(payload).digest() == _bundled_demo_digest()
-
-
-@st.cache_data(show_spinner=False, max_entries=10)
-def run_cached(payload, config_values, source_name, synthetic=False):
-    image = generate_demo()["image"] if synthetic and not payload else load_image(payload)
-    return analyze_image(image, AnalysisConfig(**config_values), source_name=source_name, synthetic=synthetic or is_bundled_demo(payload))
-
-
-def demo_result():
-    return run_cached(b"", AnalysisConfig().to_dict(), "Synthetic vineyard demo", True)
-
-
-def open_demo():
-    st.session_state["demo_requested"] = True
-    st.session_state["workspace_page"] = "Vineyard Analysis"
 
 
 def active_result():
@@ -59,11 +28,12 @@ def provenance(result):
 
 def metric_cards(result):
     summary = result["summary"]
-    columns = st.columns(4)
-    columns[0].metric("Visible canopy", f"{summary['canopy_coverage']:.1f}%")
-    columns[1].metric("Potential stress regions", str(summary["anomaly_count"]))
-    columns[2].metric("Possible canopy gaps", str(summary["gap_count"]))
-    columns[3].metric("Low-growth regions", str(summary["low_growth_count"]))
+    with st.container(key="summary_metrics"):
+        columns = st.columns(4)
+        columns[0].metric("Visible canopy", f"{summary['canopy_coverage']:.1f}%")
+        columns[1].metric("Potential stress regions", str(summary["anomaly_count"]))
+        columns[2].metric("Possible canopy gaps", str(summary["gap_count"]))
+        columns[3].metric("Low-growth regions", str(summary["low_growth_count"]))
 
 
 def show_warnings(result):
@@ -99,7 +69,6 @@ def downloads(result):
         columns[2].download_button("Structured JSON", result_json(result), "vineyard_analysis.json", "application/json", width="stretch")
         columns[0].download_button("Canopy mask PNG", original_mask_png(result), "canopy_mask.png", "image/png", width="stretch")
         columns[1].download_button("Annotated image PNG", png_bytes(annotated_image(result)), "annotated.png", "image/png", width="stretch")
-        from src.mapping.visualization import health_map_png
         columns[2].download_button("Health map PNG", png_bytes(health_map_png(result)), "health_map.png", "image/png", width="stretch")
         results = st.session_state.get("results", [])
         if len(results) > 1:
@@ -107,7 +76,6 @@ def downloads(result):
 
 
 def region_table(result, only_flagged=False):
-    import pandas as pd
     frame = pd.DataFrame(result["regions"])
     if frame.empty:
         return frame

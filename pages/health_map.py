@@ -2,9 +2,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from src.dashboard import active_result, downloads, metric_cards, provenance, region_table, show_warnings
 from src.mapping.health_map import create_health_map
 from src.mapping.visualization import LABELS
+from src.ui.results import active_result, downloads, metric_cards, provenance, region_table, show_warnings
 
 
 def render():
