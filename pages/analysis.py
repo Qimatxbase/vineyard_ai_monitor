@@ -31,7 +31,7 @@ def render():
     source = st.radio("Image source", source_options, horizontal=True, key="source_choice")
     inputs = []
     if source == "Upload images":
-        uploaded = st.file_uploader("RGB drone images", type=["jpg", "jpeg", "png", "tif", "tiff"], accept_multiple_files=True, help=f"Up to {max_images} images per analysis, {max_file_mb} MB and 40 million pixels per image.")
+        uploaded = st.file_uploader("RGB drone images", type=["jpg", "jpeg", "png", "tif", "tiff"], accept_multiple_files=True, max_upload_size=max_file_mb, help=f"Up to {max_images} images per analysis, {max_file_mb} MB and 40 million pixels per image.")
         for item in uploaded[:max_images]:
             if item.size > max_file_bytes:
                 st.error(f"{item.name}: exceeds the {max_file_mb} MB input limit.")
